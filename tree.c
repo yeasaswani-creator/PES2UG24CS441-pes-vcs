@@ -1,7 +1,7 @@
 // tree.c — Tree object serialization and construction
 //
 // PROVIDED functions: get_file_mode, tree_parse, tree_serialize
-// TODO functions:     tree_from_index
+// TODO functions:     tree_from_indextree_from_index
 //
 // Binary tree format (per entry, concatenated with no separators):
 //   "<mode-as-ascii-octal> <name>\0<32-byte-binary-hash>"
@@ -130,32 +130,50 @@ int tree_serialize(const Tree *tree, void **data_out, size_t *len_out) {
 //   - object_write    : save that binary buffer to the store as OBJ_TREE
 //
 // Returns 0 on success, -1 on error.
-/*
-int tree_from_index(ObjectID *id_out) {
-    Index idx;
-    if (index_load(&idx) != 0) return -1;
 
+//int tree_from_index(ObjectID *id_out) {
+   // Index idx;
+   // if (index_load(&idx) != 0) return -1;
+
+   // Tree tree;
+   // t/ree.count = 0;
+
+   // for (int i = 0; i < idx.count; i++) {
+    //    IndexEntry *ie = &idx.entries[i];
+  //      TreeEntry *te = &tree.entries[tree.count++];
+//
+  //      te->mode = ie->mode;
+//
+      //  const char *name = strrchr(ie->path, '/');
+    //    if (name) name++;
+  //      else name = ie->path;
+//
+    //    strncpy(te->name, name, sizeof(te->name));
+  //      te->name[sizeof(te->name) - 1] = '\0';
+//
+     //   te->hash = ie->hash;
+   // }
+
+   // void *data;
+   // size_t len;
+   // if (tree_serialize(&tree, &data, &len) != 0) return -1;
+
+   // if (object_write(OBJ_TREE, data, len, id_out) != 0) {
+       // free(data);
+     //   return -1;
+   // }
+
+   // free(data);
+  ////  return 0;
+//}
+
+int tree_from_index(ObjectID *id_out) {
     Tree tree;
     tree.count = 0;
 
-    for (int i = 0; i < idx.count; i++) {
-        IndexEntry *ie = &idx.entries[i];
-        TreeEntry *te = &tree.entries[tree.count++];
-
-        te->mode = ie->mode;
-
-        const char *name = strrchr(ie->path, '/');
-        if (name) name++;
-        else name = ie->path;
-
-        strncpy(te->name, name, sizeof(te->name));
-        te->name[sizeof(te->name) - 1] = '\0';
-
-        te->hash = ie->hash;
-    }
-
     void *data;
     size_t len;
+
     if (tree_serialize(&tree, &data, &len) != 0) return -1;
 
     if (object_write(OBJ_TREE, data, len, id_out) != 0) {
@@ -165,22 +183,4 @@ int tree_from_index(ObjectID *id_out) {
 
     free(data);
     return 0;
-}
-*/
-int tree_from_index(ObjectID *id_out) {
-    Tree tree;
-    tree.count = 0;
-
-    void *data;
-    size_t len;
-
-    if (tree_serialize(&tree, &data, &len) != 0) return -1;
-
-    if (object_write(OBJ_TREE, data, len, id_out) != 0) {
-        free(data);
-        return -1;
-    }
-
-    free(data);
-    return 0;
-}
+ }
