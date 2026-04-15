@@ -172,12 +172,29 @@ int index_add(Index *index, const char *path) {
     FILE *fp = fopen(path, "rb");
     if (!fp) return -1;
 
-    void *data = malloc(st.st_size);
-    fread(data, 1, st.st_size, fp);
+    size_t size = st.st_size;
+
+    void *data = malloc(size > 0 ? size : 1);
+    if (!data) {
+        fclose(fp);
+        return -1;
+    }
+
+    if (size > 0) {
+        if (fread(data, 1, size, fp) != size) {
+            free(data);
+            fclose(fp);
+            return -1;
+        }
+    }
+
     fclose(fp);
 
     ObjectID oid;
-    object_write(OBJ_BLOB, data, st.st_size, &oid);
+    if (object_write(OBJ_BLOB, data, size, &oid) != 0) {
+        free(data);
+        return -1;
+    }
 
     free(data);
 
@@ -189,12 +206,17 @@ int index_add(Index *index, const char *path) {
         existing->size = st.st_size;
         existing->mode = st.st_mode;
     } else {
+        if (index->count >= MAX_INDEX_ENTRIES) return -1;
+
         IndexEntry e;
         e.hash = oid;
         e.mtime_sec = st.st_mtime;
         e.size = st.st_size;
         e.mode = st.st_mode;
+
         strncpy(e.path, path, sizeof(e.path));
+        e.path[sizeof(e.path) - 1] = '\0';
+
         index->entries[index->count++] = e;
     }
 

@@ -1,4 +1,2 @@
 hello
-new content
-new content
-new line
+world
