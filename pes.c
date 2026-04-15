@@ -7,12 +7,92 @@
 #include <sys/stat.h>
 
 // DUMMY FUNCTIONS (to avoid linker errors)
+#include <dirent.h>
+#include <unistd.h>
 
-int branch_list() { return 0; }
-int branch_create(const char *name) { return 0; }
-int branch_delete(const char *name) { return 0; }
-int checkout(const char *target) { return 0; }
+// LIST BRANCHES
+int branch_list() {
+    DIR *dir = opendir(".pes/refs/heads");
+    if (!dir) return -1;
 
+    struct dirent *entry;
+    while ((entry = readdir(dir)) != NULL) {
+        if (entry->d_name[0] == '.') continue; // skip . and ..
+        printf("%s\n", entry->d_name);
+    }
+
+    closedir(dir);
+    return 0;
+}
+
+// CREATE BRANCH
+int branch_create(const char *name) {
+    char path[512];
+    snprintf(path, sizeof(path), ".pes/refs/heads/%s", name);
+
+    // check if already exists
+    if (access(path, F_OK) == 0) {
+        return -1;
+    }
+
+    FILE *src = fopen(".pes/HEAD", "r");
+    if (!src) return -1;
+
+    char line[512];
+    fgets(line, sizeof(line), src);
+    fclose(src);
+
+    char ref_path[512];
+    if (strncmp(line, "ref: ", 5) == 0) {
+        snprintf(ref_path, sizeof(ref_path), ".pes/%s", line + 5);
+        ref_path[strcspn(ref_path, "\n")] = '\0';
+    } else {
+        return -1;
+    }
+
+    FILE *fref = fopen(ref_path, "r");
+    char hash[128] = {0};
+
+    if (fref) {
+        fgets(hash, sizeof(hash), fref);
+        fclose(fref);
+    }
+
+    FILE *newb = fopen(path, "w");
+    if (!newb) return -1;
+
+    if (strlen(hash) > 0)
+        fprintf(newb, "%s", hash);
+
+    fclose(newb);
+    return 0;
+}
+
+// DELETE BRANCH
+int branch_delete(const char *name) {
+    char path[512];
+    snprintf(path, sizeof(path), ".pes/refs/heads/%s", name);
+
+    return remove(path);
+}
+
+// CHECKOUT
+int checkout(const char *target) {
+    char path[512];
+    snprintf(path, sizeof(path), ".pes/refs/heads/%s", target);
+
+    if (access(path, F_OK) != 0) {
+        return -1;
+    }
+
+    FILE *f = fopen(".pes/HEAD", "w");
+    if (!f) return -1;
+
+    fprintf(f, "ref: refs/heads/%s\n", target);
+    fclose(f);
+
+    return 0;
+}
 // ─── LOG CALLBACK FUNCTION ─────────────────────────────────
 
 void print_commit(const ObjectID *id, const Commit *c, void *ctx) {
