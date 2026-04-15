@@ -1,13 +1,19 @@
 #include "pes.h"
+#include "index.h"
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
+#include <sys/stat.h>
+
+// 🔥 DUMMY FUNCTIONS (to avoid linker errors)
+
+int branch_list() { return 0; }
+int branch_create(const char *name) { return 0; }
+int branch_delete(const char *name) { return 0; }
+int checkout(const char *target) { return 0; }
 
 // ─── PROVIDED: Phase 5 Command Wrappers ─────────────────────────────────────
 
-// Usage: 
-//   pes branch          (lists branches)
-//   pes branch <name>   (creates a branch)
-//   pes branch -d <name>(deletes a branch)
 void cmd_branch(int argc, char *argv[]) {
     if (argc == 2) {
         branch_list();
@@ -28,7 +34,6 @@ void cmd_branch(int argc, char *argv[]) {
     }
 }
 
-// Usage: pes checkout <branch_or_commit>
 void cmd_checkout(int argc, char *argv[]) {
     if (argc < 3) {
         fprintf(stderr, "Usage: pes checkout <branch_or_commit>\n");
@@ -61,13 +66,41 @@ int main(int argc, char *argv[]) {
 
     const char *cmd = argv[1];
 
-    if      (strcmp(cmd, "init") == 0)     cmd_init();
-    else if (strcmp(cmd, "add") == 0)      cmd_add(argc, argv);
-    else if (strcmp(cmd, "status") == 0)   cmd_status();
-    else if (strcmp(cmd, "commit") == 0)   cmd_commit(argc, argv);
-    else if (strcmp(cmd, "log") == 0)      cmd_log();
-    else if (strcmp(cmd, "branch") == 0)   cmd_branch(argc, argv);
-    else if (strcmp(cmd, "checkout") == 0) cmd_checkout(argc, argv);
+    if (strcmp(cmd, "init") == 0) {
+        mkdir(".pes", 0755);
+        mkdir(".pes/objects", 0755);
+        mkdir(".pes/refs", 0755);
+        mkdir(".pes/refs/heads", 0755);
+
+        printf("Initialized empty PES repository\n");
+    }
+    else if (strcmp(cmd, "add") == 0) {
+        Index index;
+        index_load(&index);
+
+        for (int i = 2; i < argc; i++) {
+            if (index_add(&index, argv[i]) == 0) {
+                printf("added %s\n", argv[i]);
+            }
+        }
+    }
+    else if (strcmp(cmd, "status") == 0) {
+        Index index;
+        index_load(&index);
+        index_status(&index);
+    }
+    else if (strcmp(cmd, "commit") == 0) {
+        printf("commit not implemented\n");
+    }
+    else if (strcmp(cmd, "log") == 0) {
+        printf("log not implemented\n");
+    }
+    else if (strcmp(cmd, "branch") == 0) {
+        cmd_branch(argc, argv);
+    }
+    else if (strcmp(cmd, "checkout") == 0) {
+        cmd_checkout(argc, argv);
+    }
     else {
         fprintf(stderr, "Unknown command: %s\n", cmd);
         fprintf(stderr, "Run 'pes' with no arguments for usage.\n");
